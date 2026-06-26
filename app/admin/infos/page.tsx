@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
@@ -9,6 +9,11 @@ import { Footer } from "@/components/footer";
 import { useInfos } from "@/components/infos-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  isAdminAuthenticated,
+  loginAdmin,
+  clearAdminToken,
+} from "@/lib/infos-api-client";
 import {
   Table,
   TableBody,
@@ -42,11 +47,43 @@ function formatShortDate(iso: string) {
 
 export default function AdminInfosPage() {
   const { infos, publish, update, remove } = useInfos();
+  const [authenticated, setAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setAuthenticated(isAdminAuthenticated());
+  }, []);
+
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setAuthError("");
+    setAuthLoading(true);
+
+    try {
+      await loginAdmin(password);
+      setAuthenticated(true);
+      setPassword("");
+    } catch {
+      setAuthError("Mot de passe incorrect.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    clearAdminToken();
+    setAuthenticated(false);
+    resetForm();
+    setMessage("");
+  };
 
   const updateField = (field: keyof typeof emptyForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -112,7 +149,7 @@ export default function AdminInfosPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
 
@@ -133,20 +170,65 @@ export default function AdminInfosPage() {
     };
 
     const wasEditing = Boolean(editingId);
+    setSubmitting(true);
 
-    if (editingId) {
-      update(editingId, payload);
-    } else {
-      publish(payload);
+    try {
+      if (editingId) {
+        await update(editingId, payload);
+      } else {
+        await publish(payload);
+      }
+
+      resetForm();
+      setMessage(
+        wasEditing
+          ? "Publication modifiée avec succès."
+          : "Publication ajoutée avec succès."
+      );
+    } catch {
+      setError("Impossible d'enregistrer la publication. Vérifiez votre connexion admin.");
+    } finally {
+      setSubmitting(false);
     }
-
-    resetForm();
-    setMessage(
-      wasEditing
-        ? "Publication modifiée avec succès."
-        : "Publication ajoutée avec succès."
-    );
   };
+
+  if (!authenticated) {
+    return (
+      <main className="min-h-screen">
+        <Header />
+        <div className="mx-auto flex min-h-[70vh] max-w-md items-center px-6 pt-28 lg:px-8">
+          <form onSubmit={handleLogin} className="w-full space-y-6 rounded-xl border border-border bg-card p-6">
+            <h1 className="text-2xl font-bold text-foreground">Administration — Infos</h1>
+            <p className="text-sm text-muted-foreground">
+              Connectez-vous pour publier des informations visibles sur le site déployé.
+            </p>
+            <div>
+              <label htmlFor="password" className="mb-2 block text-sm font-medium text-foreground">
+                Mot de passe admin
+              </label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mot de passe"
+                required
+              />
+            </div>
+            {authError && <p className="text-sm text-destructive">{authError}</p>}
+            <Button
+              type="submit"
+              className="w-full bg-beokin-blue hover:bg-beokin-blue/90"
+              disabled={authLoading}
+            >
+              {authLoading ? "Connexion…" : "Se connecter"}
+            </Button>
+          </form>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen">
@@ -163,17 +245,26 @@ export default function AdminInfosPage() {
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
           <h1 className="text-3xl font-bold text-foreground">Administration — Infos</h1>
-          {!showForm && (
-            <Button
-              type="button"
-              className="bg-beokin-blue hover:bg-beokin-blue/90"
-              onClick={startNew}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Nouvelle information
+          <div className="flex flex-wrap gap-2">
+            {!showForm && (
+              <Button
+                type="button"
+                className="bg-beokin-blue hover:bg-beokin-blue/90"
+                onClick={startNew}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Nouvelle information
+              </Button>
+            )}
+            <Button type="button" variant="outline" onClick={handleLogout}>
+              Déconnexion
             </Button>
-          )}
+          </div>
         </div>
+
+        <p className="mt-3 text-sm text-muted-foreground">
+          Les publications sont enregistrées sur le serveur et visibles par tous les visiteurs du site.
+        </p>
 
         {message && !showForm && (
           <p className="mt-6 text-sm text-beokin-blue">{message}</p>
@@ -327,8 +418,16 @@ export default function AdminInfosPage() {
           {message && <p className="text-sm text-beokin-blue">{message}</p>}
 
           <div className="flex flex-wrap gap-3">
-            <Button type="submit" className="bg-beokin-blue hover:bg-beokin-blue/90">
-              {editingId ? "Enregistrer les modifications" : "Publier"}
+            <Button
+              type="submit"
+              className="bg-beokin-blue hover:bg-beokin-blue/90"
+              disabled={submitting}
+            >
+              {submitting
+                ? "Enregistrement…"
+                : editingId
+                  ? "Enregistrer les modifications"
+                  : "Publier"}
             </Button>
             <Button
               type="button"
@@ -446,10 +545,14 @@ export default function AdminInfosPage() {
                             size="icon-sm"
                             title="Supprimer"
                             className="text-destructive hover:text-destructive"
-                            onClick={() => {
+                            onClick={async () => {
                               if (editingId === info.id) resetForm();
-                              remove(info.id);
-                              setMessage("Publication supprimée.");
+                              try {
+                                await remove(info.id);
+                                setMessage("Publication supprimée.");
+                              } catch {
+                                setError("Impossible de supprimer la publication.");
+                              }
                             }}
                           >
                             <Trash2 className="h-4 w-4" />

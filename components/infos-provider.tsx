@@ -8,23 +8,21 @@ import {
   useMemo,
   useState,
 } from "react";
+import type { InfoPost, PublishInfoInput } from "@/lib/infos-types";
 import {
-  INFOS_STORAGE_KEY,
-  type InfoPost,
-  type PublishInfoInput,
-  loadInfos,
-  publishInfo,
-  removeInfo,
-  updateInfo,
-} from "@/lib/infos-storage";
+  createInfoPost,
+  deleteInfoPost,
+  fetchPublishedInfos,
+  updateInfoPost,
+} from "@/lib/infos-api-client";
 
 type InfosContextValue = {
   infos: InfoPost[];
   isLoaded: boolean;
-  publish: (input: PublishInfoInput) => void;
-  update: (id: string, input: PublishInfoInput) => void;
-  remove: (id: string) => void;
-  refresh: () => void;
+  publish: (input: PublishInfoInput) => Promise<void>;
+  update: (id: string, input: PublishInfoInput) => Promise<void>;
+  remove: (id: string) => Promise<void>;
+  refresh: () => Promise<void>;
 };
 
 const InfosContext = createContext<InfosContextValue | null>(null);
@@ -33,44 +31,41 @@ export function InfosProvider({ children }: { children: React.ReactNode }) {
   const [infos, setInfos] = useState<InfoPost[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const refresh = useCallback(() => {
-    setInfos(loadInfos());
-    setIsLoaded(true);
+  const refresh = useCallback(async () => {
+    try {
+      const data = (await fetchPublishedInfos()) as InfoPost[];
+      setInfos(Array.isArray(data) ? data : []);
+    } catch {
+      setInfos([]);
+    } finally {
+      setIsLoaded(true);
+    }
   }, []);
 
   useEffect(() => {
-    refresh();
-
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === INFOS_STORAGE_KEY) {
-        refresh();
-      }
-    };
-
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    void refresh();
   }, [refresh]);
 
   const publish = useCallback(
-    (input: PublishInfoInput) => {
-      publishInfo(input);
-      refresh();
+    async (input: PublishInfoInput) => {
+      await createInfoPost(input);
+      await refresh();
     },
     [refresh]
   );
 
   const remove = useCallback(
-    (id: string) => {
-      removeInfo(id);
-      refresh();
+    async (id: string) => {
+      await deleteInfoPost(id);
+      await refresh();
     },
     [refresh]
   );
 
   const update = useCallback(
-    (id: string, input: PublishInfoInput) => {
-      updateInfo(id, input);
-      refresh();
+    async (id: string, input: PublishInfoInput) => {
+      await updateInfoPost(id, input);
+      await refresh();
     },
     [refresh]
   );
