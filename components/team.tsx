@@ -3,23 +3,28 @@ import { Linkedin, Mail } from "lucide-react";
 const team = [
   {
     name: "Jean-Paul Mukendi",
-    role: "Directeur Général",
-    initials: "JM",
+    role: "Administrateur gérant",
+    initials: "AG",
   },
   {
     name: "Marie Kabongo",
-    role: "Directrice Technique",
-    initials: "MK",
+    role: "Assistant Administrateur",
+    initials: "AA",
   },
   {
     name: "Patrick Lumumba",
-    role: "Chef de Projet",
-    initials: "PL",
+    role: "Directeur Technique",
+    initials: "DT",
   },
   {
     name: "Sarah Ndombe",
-    role: "Lead Developer",
-    initials: "SN",
+    role: "Juridique",
+    initials: "JU",
+  },
+  {
+    name: "Grace Mbuyi",
+    role: "Secrétaire",
+    initials: "SE",
   },
 ];
 
@@ -39,7 +44,7 @@ export function Team() {
           </p>
         </div>
 
-        <div className="mx-auto mt-16 grid max-w-4xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto mt-16 grid max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
           {team.map((member) => (
             <div
               key={member.name}
