@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import { AppProviders } from '@/components/app-providers'
+import { AppProvidersLoader } from '@/components/app-providers-loader'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -28,9 +28,16 @@ export default function RootLayout({
   return (
     <html lang="fr" className="bg-background">
       <body className="font-sans antialiased bg-background text-foreground">
-        <AppProviders>
+        {process.env.NODE_ENV === "development" && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `(function(){if(!("serviceWorker"in navigator))return;navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){x.unregister()})});if("caches"in window)caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})})})();`,
+            }}
+          />
+        )}
+        <AppProvidersLoader>
           {children}
-        </AppProviders>
+        </AppProvidersLoader>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

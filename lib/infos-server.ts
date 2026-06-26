@@ -9,7 +9,15 @@ const LOCAL_DATA_FILE = path.join(process.cwd(), "data", "published-infos.json")
 const LOCAL_UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "infos");
 
 function useBlobStorage() {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  if (process.env.INFOS_STORAGE === "local") return false;
+  if (process.env.INFOS_STORAGE === "blob") {
+    return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  }
+  // En local : fichiers sur disque. Sur Vercel : Blob si le token est configuré.
+  if (process.env.VERCEL) {
+    return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  }
+  return false;
 }
 
 async function ensureLocalDataFile() {
