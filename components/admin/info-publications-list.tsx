@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { Pencil, Search, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Search, Trash2 } from "lucide-react";
 import type { InfoPost } from "@/lib/infos-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+const PAGE_SIZE = 5;
 
 type InfoPublicationsListProps = {
   infos: InfoPost[];
@@ -49,6 +51,7 @@ export function InfoPublicationsList({
   onDelete,
 }: InfoPublicationsListProps) {
   const [query, setQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<InfoPost | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -64,6 +67,23 @@ export function InfoPublicationsList({
     );
   }, [infos, query]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredInfos.length / PAGE_SIZE));
+
+  const paginatedInfos = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredInfos.slice(start, start + PAGE_SIZE);
+  }, [filteredInfos, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const confirmDelete = async () => {
     if (!deleteTarget) return;
 
@@ -75,6 +95,187 @@ export function InfoPublicationsList({
       setDeleting(false);
     }
   };
+
+  const renderPublicationCard = (info: InfoPost) => (
+    <article
+      key={info.id}
+      className={`rounded-xl border border-border bg-card p-4 shadow-sm ${
+        editingId === info.id ? "ring-2 ring-beokin-blue/30" : ""
+      }`}
+    >
+      <div className="flex gap-4">
+        {info.image ? (
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border">
+            <Image
+              src={info.image}
+              alt={info.title}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          </div>
+        ) : (
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-border bg-secondary/20 text-xs text-muted-foreground">
+            Sans image
+          </div>
+        )}
+
+        <div className="min-w-0 flex-1">
+          {info.category && (
+            <Badge className="mb-2 bg-beokin-blue/10 text-beokin-blue hover:bg-beokin-blue/10">
+              {info.category}
+            </Badge>
+          )}
+          <h3 className="font-medium text-foreground">{info.title}</h3>
+          {info.summary && (
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{info.summary}</p>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Publié le {formatShortDate(info.publishedAt)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex justify-end gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={() => onEdit(info)}>
+          <Pencil className="mr-1 h-4 w-4" />
+          Modifier
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="text-destructive hover:text-destructive"
+          onClick={() => setDeleteTarget(info)}
+        >
+          <Trash2 className="mr-1 h-4 w-4" />
+          Supprimer
+        </Button>
+      </div>
+    </article>
+  );
+
+  const renderPublicationRow = (info: InfoPost) => (
+    <TableRow
+      key={info.id}
+      className={editingId === info.id ? "bg-beokin-blue/10 hover:bg-beokin-blue/15" : undefined}
+    >
+      <TableCell>
+        {info.image ? (
+          <div className="relative h-12 w-12 overflow-hidden rounded-md border border-border bg-secondary/40">
+            <Image
+              src={info.image}
+              alt={info.title}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          </div>
+        ) : (
+          <div className="flex h-12 w-12 items-center justify-center rounded-md border border-dashed border-border bg-secondary/20 text-[10px] text-muted-foreground">
+            N/A
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="whitespace-normal">
+        <p className="max-w-xs font-medium text-foreground">{info.title}</p>
+        {info.summary && (
+          <p className="mt-1 max-w-xs line-clamp-2 text-xs text-muted-foreground">
+            {info.summary}
+          </p>
+        )}
+      </TableCell>
+      <TableCell>
+        {info.category ? (
+          <Badge className="bg-beokin-blue/10 text-beokin-blue hover:bg-beokin-blue/10">
+            {info.category}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </TableCell>
+      <TableCell className="text-muted-foreground">{info.author || "—"}</TableCell>
+      <TableCell className="text-muted-foreground">{info.location || "—"}</TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatShortDate(info.eventDate)}
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatShortDate(info.publishedAt)}
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            title="Modifier"
+            onClick={() => onEdit(info)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            title="Supprimer"
+            className="text-destructive hover:text-destructive"
+            onClick={() => setDeleteTarget(info)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+
+  const paginationControls =
+    filteredInfos.length > PAGE_SIZE ? (
+      <div className="mt-6 flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          Page {currentPage} sur {totalPages} — {filteredInfos.length} publication
+          {filteredInfos.length > 1 ? "s" : ""}
+        </p>
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Précédent
+          </Button>
+
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+              <Button
+                key={page}
+                type="button"
+                variant={page === currentPage ? "default" : "outline"}
+                size="sm"
+                className={page === currentPage ? "bg-beokin-blue hover:bg-beokin-blue/90" : undefined}
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </Button>
+            ))}
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Suivant
+            <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    ) : null;
 
   return (
     <>
@@ -115,64 +316,7 @@ export function InfoPublicationsList({
           ) : (
             <>
               <div className="mt-8 grid gap-4 md:hidden">
-                {filteredInfos.map((info) => (
-                  <article
-                    key={info.id}
-                    className={`rounded-xl border border-border bg-card p-4 shadow-sm ${
-                      editingId === info.id ? "ring-2 ring-beokin-blue/30" : ""
-                    }`}
-                  >
-                    <div className="flex gap-4">
-                      {info.image ? (
-                        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border">
-                          <Image
-                            src={info.image}
-                            alt={info.title}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-border bg-secondary/20 text-xs text-muted-foreground">
-                          Sans image
-                        </div>
-                      )}
-
-                      <div className="min-w-0 flex-1">
-                        {info.category && (
-                          <Badge className="mb-2 bg-beokin-blue/10 text-beokin-blue hover:bg-beokin-blue/10">
-                            {info.category}
-                          </Badge>
-                        )}
-                        <h3 className="font-medium text-foreground">{info.title}</h3>
-                        {info.summary && (
-                          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{info.summary}</p>
-                        )}
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          Publié le {formatShortDate(info.publishedAt)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex justify-end gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => onEdit(info)}>
-                        <Pencil className="mr-1 h-4 w-4" />
-                        Modifier
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => setDeleteTarget(info)}
-                      >
-                        <Trash2 className="mr-1 h-4 w-4" />
-                        Supprimer
-                      </Button>
-                    </div>
-                  </article>
-                ))}
+                {paginatedInfos.map(renderPublicationCard)}
               </div>
 
               <div className="mt-8 hidden overflow-hidden rounded-xl border border-border bg-card shadow-sm md:block">
@@ -189,84 +333,11 @@ export function InfoPublicationsList({
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {filteredInfos.map((info) => (
-                      <TableRow
-                        key={info.id}
-                        className={
-                          editingId === info.id ? "bg-beokin-blue/10 hover:bg-beokin-blue/15" : undefined
-                        }
-                      >
-                        <TableCell>
-                          {info.image ? (
-                            <div className="relative h-12 w-12 overflow-hidden rounded-md border border-border bg-secondary/40">
-                              <Image
-                                src={info.image}
-                                alt={info.title}
-                                fill
-                                className="object-cover"
-                                unoptimized
-                              />
-                            </div>
-                          ) : (
-                            <div className="flex h-12 w-12 items-center justify-center rounded-md border border-dashed border-border bg-secondary/20 text-[10px] text-muted-foreground">
-                              N/A
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="whitespace-normal">
-                          <p className="max-w-xs font-medium text-foreground">{info.title}</p>
-                          {info.summary && (
-                            <p className="mt-1 max-w-xs line-clamp-2 text-xs text-muted-foreground">
-                              {info.summary}
-                            </p>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {info.category ? (
-                            <Badge className="bg-beokin-blue/10 text-beokin-blue hover:bg-beokin-blue/10">
-                              {info.category}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{info.author || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">{info.location || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {formatShortDate(info.eventDate)}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {formatShortDate(info.publishedAt)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              title="Modifier"
-                              onClick={() => onEdit(info)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              title="Supprimer"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => setDeleteTarget(info)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
+                  <TableBody>{paginatedInfos.map(renderPublicationRow)}</TableBody>
                 </Table>
               </div>
+
+              {paginationControls}
             </>
           )}
         </div>
