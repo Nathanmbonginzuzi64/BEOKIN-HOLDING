@@ -8,27 +8,19 @@ type LogoProps = {
 
 export function Logo({ compact = false, className = "" }: LogoProps) {
   return (
-    <Link href="/" aria-label="BEOKIN HOLDING SARL — Accueil" className={`flex items-center gap-2.5 ${className}`}>
+    <Link
+      href="/"
+      aria-label="BEOKIN HOLDING SARL — Accueil"
+      className={`inline-flex items-center ${className}`}
+    >
       <Image
-        src="/logo-icon.svg"
-        alt=""
-        width={compact ? 32 : 40}
-        height={compact ? 32 : 40}
-        className={compact ? "h-8 w-8" : "h-10 w-10"}
+        src="/logo.png"
+        alt="BEOKIN HOLDING SARL"
+        width={compact ? 150 : 200}
+        height={compact ? 42 : 56}
+        className={compact ? "h-9 w-auto max-w-[150px]" : "h-12 w-auto max-w-[200px]"}
         priority
       />
-      <div className="flex flex-col leading-tight">
-        <span className={`font-bold tracking-tight ${compact ? "text-sm" : "text-base"}`}>
-          <span className="text-beokin-red">BEO</span>
-          <span className="text-beokin-yellow">●</span>
-          <span className="text-beokin-blue">KIN</span>
-        </span>
-        {!compact && (
-          <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-            Holding SARL
-          </span>
-        )}
-      </div>
     </Link>
   );
 }

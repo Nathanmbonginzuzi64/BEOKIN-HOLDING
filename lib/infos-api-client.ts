@@ -1,3 +1,5 @@
+import { apiUrl } from "@/lib/api-config";
+
 const ADMIN_TOKEN_KEY = "beokin-admin-token";
 
 export function getAdminToken() {
@@ -20,7 +22,7 @@ export function isAdminAuthenticated() {
 }
 
 export async function loginAdmin(password: string) {
-  const response = await fetch("/api/admin/login", {
+  const response = await fetch(apiUrl("/admin/login"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password }),
@@ -35,7 +37,7 @@ export async function loginAdmin(password: string) {
 }
 
 export async function fetchPublishedInfos() {
-  const response = await fetch("/api/infos", { cache: "no-store" });
+  const response = await fetch(apiUrl("/infos"), { cache: "no-store" });
   if (!response.ok) {
     throw new Error("Impossible de charger les publications.");
   }
@@ -44,10 +46,11 @@ export async function fetchPublishedInfos() {
 
 export async function createInfoPost(input: unknown) {
   const token = getAdminToken();
-  const response = await fetch("/api/infos", {
+  const response = await fetch(apiUrl("/infos"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Accept: "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
@@ -62,10 +65,11 @@ export async function createInfoPost(input: unknown) {
 
 export async function updateInfoPost(id: string, input: unknown) {
   const token = getAdminToken();
-  const response = await fetch(`/api/infos/${id}`, {
+  const response = await fetch(apiUrl(`/infos/${id}`), {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
+      Accept: "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
@@ -80,9 +84,12 @@ export async function updateInfoPost(id: string, input: unknown) {
 
 export async function deleteInfoPost(id: string) {
   const token = getAdminToken();
-  const response = await fetch(`/api/infos/${id}`, {
+  const response = await fetch(apiUrl(`/infos/${id}`), {
     method: "DELETE",
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: {
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
 
   if (!response.ok) {

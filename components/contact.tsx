@@ -9,17 +9,22 @@ const contactInfo = [
   {
     icon: MapPin,
     title: "Adresse",
-    content: "Kinshasa, République Démocratique du Congo",
+    content:
+      "Stade des Martyrs, Entrée 16 local 17-05, commune de Lingwala, Kinshasa / R.D. Congo",
   },
   {
     icon: Phone,
     title: "Téléphone",
-    content: "+243 XX XXX XXXX",
+    content: "+243 998 613 981",
+    href: "tel:+243998613981",
+    secondary: "+243 989 162 203",
+    secondaryHref: "tel:+243989162203",
   },
   {
     icon: Mail,
     title: "Email",
-    content: "contact@beokin.com",
+    content: "beokin26@gmail.com",
+    href: "mailto:beokin26@gmail.com",
   },
 ];
 
@@ -73,7 +78,24 @@ export function Contact() {
                   </div>
                   <div>
                     <p className="font-medium text-foreground">{item.title}</p>
-                    <p className="text-muted-foreground">{item.content}</p>
+                    {"href" in item && item.href ? (
+                      <a
+                        href={item.href}
+                        className="block text-muted-foreground transition-colors hover:text-beokin-blue"
+                      >
+                        {item.content}
+                      </a>
+                    ) : (
+                      <p className="text-muted-foreground">{item.content}</p>
+                    )}
+                    {"secondary" in item && item.secondary && (
+                      <a
+                        href={item.secondaryHref}
+                        className="mt-1 block text-muted-foreground transition-colors hover:text-beokin-blue"
+                      >
+                        {item.secondary}
+                      </a>
+                    )}
                   </div>
                 </div>
               ))}
