@@ -2,7 +2,7 @@ import { Linkedin, Mail } from "lucide-react";
 
 const team = [
   {
-    name: "Jean-Paul Mukendi",
+    name: "Denis TSHILUMBA BUZANGU",
     role: "Administrateur gérant",
     initials: "AG",
   },
