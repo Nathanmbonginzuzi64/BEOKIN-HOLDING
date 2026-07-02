@@ -158,3 +158,162 @@
 .group:hover .animate-info-badge {
   animation: info-badge-pop 0.6s ease-in-out;
 }
+
+@keyframes site-intro-logo-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes site-intro-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes site-intro-progress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes site-intro-dot-pulse {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.75);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes site-intro-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+}
+
+.site-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.site-intro-overlay--exit {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.site-intro-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in oklch, var(--beokin-blue) 22%, transparent), transparent 58%),
+    radial-gradient(circle at 30% 60%, color-mix(in oklch, var(--beokin-red) 12%, transparent), transparent 45%),
+    radial-gradient(circle at 70% 60%, color-mix(in oklch, var(--beokin-yellow) 12%, transparent), transparent 45%);
+  animation: site-intro-glow 3.5s ease-in-out infinite;
+}
+
+.site-intro-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(90vw, 24rem);
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.site-intro-logo-wrap {
+  animation: site-intro-logo-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.site-intro-logo {
+  max-width: 240px;
+}
+
+.site-intro-tagline {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  animation: site-intro-fade-up 0.8s ease 0.25s both;
+}
+
+.site-intro-progress-track {
+  margin-top: 2rem;
+  height: 4px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--foreground) 8%, transparent);
+}
+
+.site-intro-progress-bar {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    var(--beokin-red),
+    var(--beokin-yellow),
+    var(--beokin-blue)
+  );
+  animation: site-intro-progress 3.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.site-intro-dots {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.site-intro-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  animation: site-intro-dot-pulse 1.2s ease-in-out infinite;
+}
+
+.site-intro-dot--red {
+  background: var(--beokin-red);
+}
+
+.site-intro-dot--yellow {
+  background: var(--beokin-yellow);
+  animation-delay: 0.15s;
+}
+
+.site-intro-dot--blue {
+  background: var(--beokin-blue);
+  animation-delay: 0.3s;
+}
